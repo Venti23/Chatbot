@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Educacional</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        h2 {
+            text-align: center;
+        }
+        #chatBox {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        #response {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 300px; /* Permite rolagem se necessário */
+            overflow: auto;
+        }
+        #inputArea {
+            display: flex;
+        }
+        #userInput {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+        .user {
+            align-self: flex-end;
+            background-color: #007bff;
+            color: white;
+        }
+        .bot {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Chatbot para TEA</h2>
+    
+    <div id="chatBox">
+        <div id="response"></div>
+        <div id="inputArea">
+            <input type="text" id="userInput" placeholder="Digite sua dúvida..." autocomplete="off" onkeypress="handleKeyPress(event)" />
+            <button onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userMessage = document.getElementById("userInput").value.trim();
+
+            if (!userMessage) {
+                alert("Por favor, digite uma pergunta!");
+                return;
+            }
+
+            let chatBox = document.getElementById("response");
+
+            // Exibir mensagem do usuário
+            let userDiv = document.createElement("div");
+            userDiv.className = "message user";
+            userDiv.innerText = userMessage;
+            chatBox.appendChild(userDiv);
+
+            // Enviar mensagem para o Flask
+            fetch("https://testesvr.onrender.com/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userMessage })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let botDiv = document.createElement("div");
+                botDiv.className = "message bot";
+                botDiv.innerText = data.response ? data.response : "Erro ao obter resposta.";
+                chatBox.appendChild(botDiv);
+                chatBox.scrollTop = chatBox.scrollHeight; // Garantir que a rolagem vá para a última mensagem
+            })
+            .catch(error => {
+                console.error("Erro ao enviar a mensagem:", error);
+                let botDiv = document.createElement("div");
+                botDiv.className = "message bot";
+                botDiv.innerText = "⚠️ Erro ao se conectar com o servidor.";
+                chatBox.appendChild(botDiv);
+            });
+
+            document.getElementById("userInput").value = ''; // Limpar campo de input
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+    </script>
+
+</body>
+</html>
