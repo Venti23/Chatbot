@@ -1,134 +1,112 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot Educacional</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-        }
-        h2 {
-            text-align: center;
-        }
-        #chatBox {
-            width: 100%;
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        #response {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 300px; /* Permite rolagem se necessário */
-            overflow: auto;
-        }
-        #inputArea {
-            display: flex;
-        }
-        #userInput {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            padding: 10px;
-            border-radius: 8px;
-            max-width: 80%;
-        }
-        .user {
-            align-self: flex-end;
-            background-color: #007bff;
-            color: white;
-        }
-        .bot {
-            align-self: flex-start;
-            background-color: #f1f1f1;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>PanteraBot</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #111;
+      color: white;
+      padding: 2rem;
+    }
+    #chat {
+      max-width: 600px;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #1e1e1e;
+      border-radius: 10px;
+      height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .msg {
+      max-width: 70%;
+      padding: 10px 15px;
+      margin: 5px 0;
+      border-radius: 20px;
+      word-wrap: break-word;
+      line-height: 1.4em;
+    }
+    .user {
+      background: #444;
+      align-self: flex-end;
+      margin-left: auto;
+      text-align: right;
+    }
+    .bot {
+      background: #222;
+      border-left: 4px solid #ff0055;
+      align-self: flex-start;
+    }
+    input {
+      padding: 10px;
+      width: 70%;
+      border-radius: 8px;
+      border: none;
+    }
+    button {
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      background: #ff0055;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
+  <h2>🐾 PanteraBot</h2>
+  <div id="chat"></div>
+  <input type="text" id="userInput" placeholder="Digite sua pergunta ou número da opção..." onkeydown="checarEnter(event)" />
+  <button onclick="sendMessage()">Enviar</button>
 
-    <h2>Chatbot para TEA</h2>
-    
-    <div id="chatBox">
-        <div id="response"></div>
-        <div id="inputArea">
-            <input type="text" id="userInput" placeholder="Digite sua dúvida..." autocomplete="off" onkeypress="handleKeyPress(event)" />
-            <button onclick="sendMessage()">Enviar</button>
-        </div>
-    </div>
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("userInput");
+      const message = input.value.trim();
+      if (!message) return;
 
-    <script>
-        function sendMessage() {
-            let userMessage = document.getElementById("userInput").value.trim();
+      let msgEl = document.createElement("div");
+      msgEl.className = "msg user";
+      msgEl.id = "ultimaPergunta";
+      msgEl.innerText = message;
+      document.getElementById("chat").appendChild(msgEl);
+      input.value = "";
 
-            if (!userMessage) {
-                alert("Por favor, digite uma pergunta!");
-                return;
-            }
+      const digitando = document.createElement("div");
+      digitando.className = "msg bot";
+      digitando.id = "digitando";
+      digitando.innerHTML = "<em>PanteraBot está digitando...</em>";
+      document.getElementById("chat").appendChild(digitando);
 
-            let chatBox = document.getElementById("response");
+      setTimeout(async () => {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message })
+        });
 
-            // Exibir mensagem do usuário
-            let userDiv = document.createElement("div");
-            userDiv.className = "message user";
-            userDiv.innerText = userMessage;
-            chatBox.appendChild(userDiv);
+        const data = await res.json();
 
-            // Enviar mensagem para o Flask
-            fetch("https://testesvr.onrender.com/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMessage })
-            })
-            .then(response => response.json())
-            .then(data => {
-                let botDiv = document.createElement("div");
-                botDiv.className = "message bot";
-                botDiv.innerText = data.response ? data.response : "Erro ao obter resposta.";
-                chatBox.appendChild(botDiv);
-                chatBox.scrollTop = chatBox.scrollHeight; // Garantir que a rolagem vá para a última mensagem
-            })
-            .catch(error => {
-                console.error("Erro ao enviar a mensagem:", error);
-                let botDiv = document.createElement("div");
-                botDiv.className = "message bot";
-                botDiv.innerText = "⚠️ Erro ao se conectar com o servidor.";
-                chatBox.appendChild(botDiv);
-            });
-
-            document.getElementById("userInput").value = ''; // Limpar campo de input
+        document.getElementById("digitando").remove();
+        if (data.pergunta) {
+          document.getElementById("ultimaPergunta").innerText = data.pergunta;
         }
+        const respostaBot = document.createElement("div");
+        respostaBot.className = "msg bot";
+        respostaBot.innerText = data.response;
+        document.getElementById("chat").appendChild(respostaBot);
+        document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+      }, 1000);
+    }
 
-        function handleKeyPress(event) {
-            if (event.key === "Enter") {
-                sendMessage();
-            }
-        }
-    </script>
-
+    function checarEnter(event) {
+      if (event.key === "Enter") {
+        sendMessage();
+      }
+    }
+  </script>
 </body>
 </html>
