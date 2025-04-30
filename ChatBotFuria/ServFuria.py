@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify, render_template
-import os, json
+import os
+import json
 
-app = Flask(__name__, template_folder="templates")
+app = Flask(__name__, template_folder="Templates")
 
+# Caminho absoluto para o diretório base
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
-with open("./perguntas/perguntas.json", "r", encoding="utf-8") as f:
+# Caminho para perguntas.json
+caminho_perguntas = os.path.join(base_dir, "perguntas", "perguntas.json")
+with open(caminho_perguntas, "r", encoding="utf-8") as f:
     perguntas = json.load(f)
 
 @app.route("/")
@@ -17,9 +22,11 @@ def chat():
     msg = data.get("message", "").strip()
 
     if msg.isdigit() and msg in perguntas:
-        caminho = os.path.join(base_dir, "dados", f"{msg}.json")
-        if os.path.exists(caminho):
-            with open("./perguntas/perguntas.json", "r", encoding="utf-8") as f:
+        # Caminho para o arquivo da resposta
+        caminho_dados = os.path.join(base_dir, "perguntas", "dados", f"{msg}.json")
+
+        if os.path.exists(caminho_dados):
+            with open(caminho_dados, "r", encoding="utf-8") as f:
                 conteudo = json.load(f)
                 return jsonify({
                     "response": conteudo["resposta"],
@@ -31,7 +38,8 @@ def chat():
                 "pergunta": None
             })
     else:
-        menu = "\n".join([f"{num}. {perg}" for num, perg in perguntas.items()])
+        # Mensagem padrão + menu
+        menu = "\n".join([f"{num}. {texto}" for num, texto in perguntas.items()])
         saudacao = (
             "Olá! Eu sou o PanteraBot 🐾\n"
             "Digite o número de uma das opções abaixo para saber mais:\n\n" + menu

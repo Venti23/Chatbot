@@ -67,33 +67,45 @@
       const input = document.getElementById("userInput");
       const message = input.value.trim();
       if (!message) return;
-
+  
+      // Cria a mensagem do usuário com ID para possível substituição
       let msgEl = document.createElement("div");
       msgEl.className = "msg user";
-      msgEl.id = "ultimaPergunta";
+      if (!isNaN(message)) {
+  msgEl.id = "ultimaPergunta";
+}
+
       msgEl.innerText = message;
       document.getElementById("chat").appendChild(msgEl);
       input.value = "";
-
+  
+      
       const digitando = document.createElement("div");
       digitando.className = "msg bot";
       digitando.id = "digitando";
       digitando.innerHTML = "<em>PanteraBot está digitando...</em>";
       document.getElementById("chat").appendChild(digitando);
-
+  
+      
       setTimeout(async () => {
         const res = await fetch("/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message })
         });
-
+  
         const data = await res.json();
-
+  
+        
         document.getElementById("digitando").remove();
-        if (data.pergunta) {
-          document.getElementById("ultimaPergunta").innerText = data.pergunta;
+  
+        
+        const ultima = document.getElementById("ultimaPergunta");
+        if (data.pergunta && ultima) {
+          ultima.innerText = data.pergunta;
         }
+  
+        
         const respostaBot = document.createElement("div");
         respostaBot.className = "msg bot";
         respostaBot.innerText = data.response;
@@ -101,12 +113,13 @@
         document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
       }, 1000);
     }
-
+  
     function checarEnter(event) {
       if (event.key === "Enter") {
         sendMessage();
       }
     }
   </script>
+  
 </body>
 </html>
